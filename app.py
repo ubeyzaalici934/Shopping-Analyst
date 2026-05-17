@@ -1,138 +1,232 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import re  
 from analyzer import ShoppingAnalyzer
+from scraper import ham_metin_ayıkla
 
-st.set_page_config(page_title="Alışveriş Danışmanım Pro", layout="wide", page_icon="💎")
+st.set_page_config(page_title="Alışveriş Danışmanım", layout="wide", page_icon="🛒")
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
     
-    /* Arka planı ve genel yazıları tamamen koyu moda kilitliyoruz */
     .stApp {
-        background-color: #0e1117 !important;
+        background-color: #0b0d13 !important;
         font-family: 'Inter', sans-serif;
-        color: #ffffff !important;
+        color: #f3f4f6 !important;
     }
     
-    /* Ortalanmış Başlık (Karanlıkta Parlayan Saf Beyaz) */
-    .hero-container {
+    .brand-container {
         text-align: center;
         padding-top: 50px;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
     }
-    .hero-title {
-        font-size: 44px;
-        font-weight: 800;
+    .brand-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 52px;
+        font-weight: 700;
+        letter-spacing: -1.5px;
+        background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 5px;
+    }
+    .brand-subtitle {
+        font-size: 14px;
+        color: #6366f1 !important;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+    }
+    
+    div[data-testid="stTabs"] {
+        background-color: transparent !important;
+    }
+    div[data-baseweb="tab-list"] {
+        justify-content: center !important; 
+        gap: 15px !important;
+        border-bottom: 1px solid #1f2937 !important;
+        padding-bottom: 10px;
+    }
+    button[data-baseweb="tab"] {
+        background-color: transparent !important;
+        color: #9ca3af !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        padding: 10px 24px !important;
+        border-radius: 20px !important;
+        transition: all 0.3s ease !important;
+        border: 1px solid transparent !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
-        letter-spacing: -1px;
+        background-color: #1e1b4b !important; 
+        border: 1px solid #4338ca !important; 
     }
     
-    /* Sekme (Tab) Başlıkları */
-    [data-baseweb="tab"] * {
-        color: #9aa0a6 !important; /* Aktif olmayan sekmeler gri */
+    div[data-testid="stTextInput"] > div {
+        background-color: #11131e !important;
+        border: 1px solid #222538 !important;
+        border-radius: 16px !important; 
+        padding: 4px 12px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
-    [data-baseweb="tab"][aria-selected="true"] * {
-        color: #FF4B4B !important; /* Aktif sekme kırmızı */
+    div[data-testid="stTextInput"] > div:focus-within {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
     }
-    
-    /* Koyu Mod Uyumlu Giriş Kutusu */
     div[data-testid="stTextInput"] input {
-        background-color: #1a1c23 !important;
         color: #ffffff !important;
-        border: 1px solid #30363d !important;
-        border-radius: 15px !important;
-        height: 3em !important;
+        font-size: 15px !important;
     }
     div[data-testid="stTextInput"] input::placeholder {
-        color: #888888 !important;
+        color: #4b5563 !important;
     }
     
-    /* Grafit Siyahı Premium Kart Tasarımı */
     .metric-card {
-        background-color: #161b22 !important; /* Arka plandan hafifçe ayrışan grafit tonu */
+        background-color: #11131e !important;
         padding: 26px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
-        border: 1px solid #30363d;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); 
+        border: 1px solid #1f2335;
         text-align: center;
-        min-height: 200px;
+        min-height: 190px;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        transition: transform 0.2s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-4px);
     }
     .metric-title {
-        font-size: 14px;
-        color: #8b949e !important; /* Soft gri başlık */
+        font-size: 13px;
+        color: #6b7280 !important;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 10px;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
     }
     .metric-value {
-        font-size: 36px;
-        color: #FF4B4B !important; /* Kırmızı neon puanlar */
-        font-weight: 800;
-        margin-bottom: 12px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 38px;
+        color: #6366f1 !important;
+        font-weight: 700;
+        margin-bottom: 10px;
     }
     .metric-desc {
         font-size: 13px;
-        color: #c9d1d9 !important; /* Net okunan beyaz/gri alt metin */
+        color: #9ca3af !important;
         line-height: 1.5;
         margin: 0;
     }
     
-    /* Koyu Mod Buton Tasarımı */
     .stButton>button { 
-        border-radius: 25px; 
-        background-color: #FF4B4B; 
-        color: white; 
-        font-weight: bold; 
-        height: 3.5em; 
-        box-shadow: 0 4px 12px rgba(255,75,75,0.3);
-        border: none;
+        border-radius: 16px; 
+        background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%) !important;
+        color: white !important; 
+        font-weight: 600 !important; 
+        font-family: 'Space Grotesk', sans-serif !important;
+        height: 3.4em; 
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25) !important;
+        border: none !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton>button:hover {
+        transform: scale(1.01);
+        box-shadow: 0 4px 25px rgba(99, 102, 241, 0.4) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_resource
-def get_init(): return ShoppingAnalyzer()
-analyzer = get_init()
+def yorumlari_kurtar_ve_birlestir(dosya_adi, scraper_metni):
+    """
+    scraper.py <script> etiketlerini sildiği için kaybolan yorumları,
+    orijinal dosyadan regex ile bulup scraper metninin sonuna ekler.
+    """
+    try:
+        with open(dosya_adi, "r", encoding="utf-8") as f:
+            raw_html = f.read()
+            
+        yorumlar = re.findall(r'"comment"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', raw_html)
+        
+        if yorumlar:
+            gecerli_yorumlar = [f"• {y}" for y in yorumlar if len(y) > 10]
+            ek_metin = "\n\n--- GERÇEK MÜŞTERİ YORUMLARI ---\n" + "\n".join(gecerli_yorumlar)
+            return str(scraper_metni) + ek_metin
+    except Exception:
+        pass
+    
+    return str(scraper_metni)
 
+try:
+    analyzer = ShoppingAnalyzer()
+    api_hata_durumu = False
+except ValueError:
+    api_hata_durumu = True
+    
 if "analiz_sonucu" not in st.session_state: st.session_state.analiz_sonucu = None
 if "sohbet_gecmisi" not in st.session_state: st.session_state.sohbet_gecmisi = []
 
-st.markdown('<div class="hero-container"><h1 class="hero-title">🛍️ Alışveriş Danışmanım Pro</h1></div>', unsafe_allow_html=True)
+st.markdown('<div class="brand-container"><h1 class="brand-title">ALIŞVERİŞ DANIŞMANIM</h1><p class="brand-subtitle">Ürün Analizi</p></div>', unsafe_allow_html=True)
 
-tab_single, tab_bench = st.tabs(["🔍 Ürün Analiz Raporu", "⚔️ Ürünleri Karşılaştır"])
+tab_single, tab_bench = st.tabs(["📊 Analiz Raporu", "⚔️ Karşılaştırma Motoru"])
 
 with tab_single:
     col_space1, col_main, col_space2 = st.columns([1, 4, 1])
     with col_main:
-        url = st.text_input("Linki Yapıştır", placeholder="Analiz edilecek ürünün linkini buraya bırakın...", label_visibility="collapsed")
-        analiz_btn = st.button("🚀 Yorumları Derinlemesine Analiz Et", use_container_width=True)
+        url = st.text_input("Linki Yapıştır", placeholder="Trendyol ürün linkini buraya bırakın...", label_visibility="collapsed")
+        analiz_btn = st.button("Ürünü Analiz Et", use_container_width=True)
 
-    if st.session_state.analiz_sonucu or analiz_btn:
-        if analiz_btn and url:
-            with st.spinner("Yorum geçmişi taranıyor..."):
-                comments = "Kalıp dar, kumaş iyi."
-                st.session_state.analiz_sonucu = analyzer.urun_analiz_et(comments)
-                st.session_state.sohbet_gecmisi = [] 
+    if analiz_btn and url:
+        if api_hata_durumu:
+            st.error("🚨 **Sistem Hatası:** `GEMINI_API_KEY` yüklenemedi!")
+        else:
+            with st.spinner("Yorum verileri işleniyor ve analiz ediliyor..."):
+                url_lower = url.lower()
+                if "krem" in url_lower or "nemlendirici" in url_lower:
+                    hedef_dosya = "krem.html"
+                elif "elbise" in url_lower or "giyim" in url_lower:
+                    hedef_dosya = "elbise.html"
+                else:
+                    hedef_dosya = "telefon.html"
+
+                scraper_sonuc = ham_metin_ayıkla(hedef_dosya)
+                
+                if scraper_sonuc["durum"] == "Başarılı":
+                    # SCRAPER'DAN GELEN METNE YORUMLARI ENJEKTE EDİYORUZ
+                    zenginlestirilmis_metin = yorumlari_kurtar_ve_birlestir(hedef_dosya, scraper_sonuc["saf_metin"])
+                    
+                    if len(zenginlestirilmis_metin.strip()) == 0:
+                        st.error(f"🚨 Dosya İçeriği Boş: '{hedef_dosya}' dosyasında okunabilir metin veya yorum yok.")
+                    else:
+                        st.session_state.analiz_sonucu = analyzer.urun_analiz_et(zenginlestirilmis_metin)
+                        st.session_state.sohbet_gecmisi = []
+                else:
+                    st.error(f"🚨 Dosya Hatası: Sunum için gerekli '{hedef_dosya}' yerel veri kaynağı bulunamadı!")
+                    st.session_state.analiz_sonucu = None
         
-        if st.session_state.analiz_sonucu:
-            res = st.session_state.analiz_sonucu
+    # Rapor Gösterim Alanı
+    if st.session_state.analiz_sonucu:
+        res = st.session_state.analiz_sonucu
+        
+        if "hata" in res:
+            st.error(f"{res['hata']}")
+        else:
             st.divider()
             
+            # Kartlar Alanı
             m1, m2, m3, m4 = st.columns(4)
             with m1:
-                st.markdown(f'<div class="metric-card"><p class="metric-title">⭐ Genel Not</p><p class="metric-value">{res["puanlar"]["Genel Not"]["skor"]}/10</p><p class="metric-desc">{res["puanlar"]["Genel Not"]["neden"]}</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p class="metric-title">Genel Not</p><p class="metric-value">{res["puanlar"]["Genel Not"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Genel Not"]["neden"]}</p></div>', unsafe_allow_html=True)
             with m2:
-                st.markdown(f'<div class="metric-card"><p class="metric-title">👔 Kumaş & Kalite</p><p class="metric-value">{res["puanlar"]["Kumaş & Kalite"]["skor"]}/10</p><p class="metric-desc">{res["puanlar"]["Kumaş & Kalite"]["neden"]}</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p class="metric-title">Kumaş & Kalite</p><p class="metric-value">{res["puanlar"]["Kumaş & Kalite"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Kumaş & Kalite"]["neden"]}</p></div>', unsafe_allow_html=True)
             with m3:
-                st.markdown(f'<div class="metric-card"><p class="metric-title">🚚 Kargo & Paket</p><p class="metric-value">{res["puanlar"]["Kargo & Paket"]["skor"]}/10</p><p class="metric-desc">{res["puanlar"]["Kargo & Paket"]["neden"]}</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p class="metric-title">Kargo & Paket</p><p class="metric-value">{res["puanlar"]["Kargo & Paket"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Kargo & Paket"]["neden"]}</p></div>', unsafe_allow_html=True)
             with m4:
-                st.markdown(f'<div class="metric-card"><p class="metric-title">💰 Fiyat & Performans</p><p class="metric-value">{res["puanlar"]["Fiyat & Performans"]["skor"]}/10</p><p class="metric-desc">{res["puanlar"]["Fiyat & Performans"]["neden"]}</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p class="metric-title">Fiyat & Performans</p><p class="metric-value">{res["puanlar"]["Fiyat & Performans"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Fiyat & Performans"]["neden"]}</p></div>', unsafe_allow_html=True)
 
             st.divider()
 
@@ -142,35 +236,44 @@ with tab_single:
 
             st.divider()
 
+            # Detaylar ve Grafik Yan Yana
             col_sol, col_sag = st.columns(2)
             with col_sol:
-                st.success("### ✅ Neleri Sevdik?")
+                st.success("### ✅ Olumlu Özellikler")
                 for a in res['artilar']: st.markdown(f"• {a}")
-                st.error("### ❌ Neleri Sevmedik?")
+                st.error("### ❌ Olumsuz Özellikler")
                 for e in res['eksiler']: st.markdown(f"• {e}")
                 
             with col_sag:
-                st.markdown("### 📈 12 Aylık Memnuniyet Trendi")
-                df = pd.DataFrame(res["zamanla_degisim"])
-                fig_line = px.line(df, x="ay", y="skor", markers=True, color_discrete_sequence=['#FF4B4B'])
+                st.markdown("### 📈 Müşteri Memnuniyet Grafiği")
+                trend_verisi = res.get("zamanla_degisim", [])
                 
-                fig_line.update_layout(
-                    yaxis_range=[0, 10], 
-                    template="plotly_dark", 
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    xaxis=dict(fixedrange=True, title="Aylar"),
-                    yaxis=dict(fixedrange=True, title="Memnuniyet Skoru")
-                )
-                st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
+                if isinstance(trend_verisi, list) and len(trend_verisi) > 0:
+                    df = pd.DataFrame(trend_verisi)
+                    if "ay" in df.columns and "skor" in df.columns:
+                        fig_line = px.line(df, x="ay", y="skor", markers=True, color_discrete_sequence=['#6366f1'])
+                        fig_line.update_layout(
+                            yaxis_range=[0, 10], 
+                            template="plotly_dark", 
+                            plot_bgcolor="rgba(0,0,0,0)",
+                            paper_bgcolor="rgba(0,0,0,0)",
+                            xaxis=dict(fixedrange=True, title="Aylar"),
+                            yaxis=dict(fixedrange=True, title="Skor")
+                        )
+                        st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
+                    else:
+                        st.info("📊 Zaman trendi sütun yapısı çözümlenemedi.")
+                else:
+                    st.info("📊 Anlamlı bir zaman trendi çıkarılamadı.")
 
             st.divider()
 
-            st.markdown("### 💬 Ürün Hakkında Yapay Zekaya Sor")
+            # LLM Chat Katmanı
+            st.markdown("### 💬 Asistana Sor")
             for mesaj in st.session_state.sohbet_gecmisi:
                 with st.chat_message(mesaj["role"]): st.write(mesaj["content"])
             
-            if soru := st.chat_input("Örn: Boyum 1.80, L beden bana olur mu?"):
+            if soru := st.chat_input("Ürün hakkında bir soru sorun..."):
                 st.session_state.sohbet_gecmisi.append({"role": "user", "content": soru})
                 with st.chat_message("user"): st.write(soru)
                 
@@ -181,17 +284,37 @@ with tab_single:
                         st.session_state.sohbet_gecmisi.append({"role": "assistant", "content": cevap})
                 st.rerun()
 
+# --- TAB 2: KARŞILAŞTIRMA MOTORU ---
 with tab_bench:
-    st.subheader("⚔️ İki Ürünü Yan Yana Kıyasla")
+    st.subheader("⚔️ İki Farklı Ürünü Karşılaştır")
     col_a, col_b = st.columns(2)
-    with col_a: link_a = st.text_input("1. Ürünün Linki", placeholder="İlk linki yapıştırın...")
-    with col_b: link_b = st.text_input("2. Ürünün Linki", placeholder="İkinci linki yapıştırın...")
+    with col_a: link_a = st.text_input("1. Ürünün Linki", placeholder="İlk linki bırakın...", key="bench_url_a")
+    with col_b: link_b = st.text_input("2. Ürünün Linki", placeholder="İkinci linki bırakın...", key="bench_url_b")
     
-    if st.button("🏆 Hangisi Daha Mantıklı?", use_container_width=True):
+    if st.button("🏆 Analitiği Kıyasla", use_container_width=True):
         if link_a and link_b:
-            with st.spinner("Farklar hesaplanıyor..."):
-                rapor = analyzer.kiyasla("Ürün A", "Ürün B")
-                st.success("### 🧠 Hangisini Almalı?")
-                st.write(rapor)
+            if api_hata_durumu:
+                st.error("🚨 **Sistem Hatası:** API yapılandırması eksik.")
+            else:
+                with st.spinner("İki ürünün semantik farkları hesaplanıyor..."):
+                    la_lower = link_a.lower()
+                    dosya_a = "krem.html" if "krem" in la_lower else ("elbise.html" if "elbise" in la_lower else "telefon.html")
+                    
+                    lb_lower = link_b.lower()
+                    dosya_b = "krem.html" if "krem" in lb_lower else ("elbise.html" if "elbise" in lb_lower else "telefon.html")
+                    
+                    sc_a = ham_metin_ayıkla(dosya_a)
+                    sc_b = ham_metin_ayıkla(dosya_b)
+                    
+                    if sc_a["durum"] == "Başarılı" and sc_b["durum"] == "Başarılı":
+                        # İKİ DOSYA İÇİN DE YORUMLARI KURTARIYORUZ
+                        zengin_metin_a = yorumlari_kurtar_ve_birlestir(dosya_a, sc_a["saf_metin"])
+                        zengin_metin_b = yorumlari_kurtar_ve_birlestir(dosya_b, sc_b["saf_metin"])
+                        
+                        rapor = analyzer.kiyasla(str(zengin_metin_a), str(zengin_metin_b))
+                        st.success("### 🧠 Yapay Zeka Karşılaştırma Raporu")
+                        st.write(rapor)
+                    else:
+                        st.error("🚨 Karşılaştırma için gerekli kaynak HTML dosyaları bulunamadı.")
         else:
-            st.warning("Lütfen iki linki de girin.")
+            st.warning("Lütfen iki ürünün de link alanlarını doldurun.")

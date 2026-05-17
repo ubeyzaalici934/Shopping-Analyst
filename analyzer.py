@@ -1,72 +1,127 @@
 import os
 import json
 import re
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
-from google import genai 
+from pydantic import BaseModel, Field
+from typing import List
 
 load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+class PuanDetay(BaseModel):
+    skor: str = Field(description="0-10 arası bir değerlendirme notu. Örn: '8.5'")
+    neden: str = Field(description="Bu puanın verilme gerekçesi, kısa analiz cümlesi.")
+
+class KategoriPuanlari(BaseModel):
+    genel: PuanDetay = Field(description="Genel kategorisi")
+    kalite: PuanDetay = Field(description="Kalite kategorisi")
+    kargo: PuanDetay = Field(description="Kargo süreci kategorisi")
+    fiyat: PuanDetay = Field(description="Fiyat & Performans dengesi kategorisi")
+
+class ZamanTrendItem(BaseModel):
+    ay: str = Field(description="Ay adı. Örn: 'Ocak', 'Şubat'")
+    skor: float = Field(description="O aya ait memnuniyet skoru (0 ile 10 arasında)")
+
+class GeminiAnalizSchema(BaseModel):
+    ozet: str = Field(description="Ürünün genel durumu hakkında dürüst bir tüketici özeti.")
+    artilar: List[str] = Field(description="Öne çıkan olumlu özelliklerin listesi.")
+    eksiler: List[str] = Field(description="Eleştirilen olumsuz özelliklerin listesi.")
+    dikkat_edilmesi_gereken: str = Field(description="Satın alma öncesi hayati kullanıcı uyarısı.")
+    puanlar: KategoriPuanlari
+    zamanla_degisim: List[ZamanTrendItem]
+
 
 class ShoppingAnalyzer:
-    def __init__(self, model_name='gemini-1.5-flash'): 
-        self.client = genai.Client(api_key=API_KEY)
+    def __init__(self, model_name='gemini-2.5-flash'): 
+        if not GEMINI_API_KEY:
+            raise ValueError("API_KEY_BULUNAMADI")
+        self.client = genai.Client(api_key=GEMINI_API_KEY)
         self.model_name = model_name
 
-    def urun_analiz_et(self, yorumlar):
-        """
-        Gelen ham yorumları 12 aylık trend ve detaylı puan gerekçeleriyle analiz eder.
-        """
-        sahte_analiz_paketi = {
-            "ozet": "Bu ürün kumaş kalitesi ve şıklığıyla kullanıcıların beğenisini kazanmış durumda. Ancak kalıplarının dar olması en çok eleştirilen noktası. Genel olarak parasının hakkını veren bir seçenek.",
-            "artilar": [
-                "Kumaş dokusu yumuşacık ve oldukça kaliteli.",
-                "Kargo kutusu sapasağlam ve 2 günde hızlıca ulaştı.",
-                "Duruşu çok şık, tam fotoğraftaki gibi görünüyor."
-            ],
-            "eksiler": [
-                "Kalıpları kesinlikle dar, 1 beden büyük alınmalı.",
-                "Rengi fotoğraftakine göre yarım ton daha koyu."
-            ],
-            "dikkat_edilmesi_gereken": "Eğer hassas bir cildiniz varsa, içindeki yün oranından dolayı ilk giyişte hafif bir kaşınma hissi yapabilir.",
+    def _metin_optimize_et(self, ham_metin):
+        if not ham_metin:
+            return ""
+        return re.sub(r'\s+', ' ', str(ham_metin)).strip()
+
+    def urun_analiz_et(self, urun_icerigi):
+        if not urun_icerigi or len(urun_icerigi.strip()) == 0:
+            return {"hata": "HTML dosyasından okunabilir bir metin çıkarılamadı. Dosya içeriğini kontrol edin."}
             
-            "puanlar": {
-                "Genel Not": {
-                    "skor": "8.5",
-                    "neden": "Kumaş kalitesi ve kargo hızı çok yüksek ancak dar kalıp puanı biraz kırdı."
-                },
-                "Kumaş & Kalite": {
-                    "skor": "9.0",
-                    "neden": "Yorumların %85'i dokusunu ve kışlık sıcak tutma performansını övmüş."
-                },
-                "Kargo & Paket": {
-                    "skor": "9.5",
-                    "neden": "Siparişlerin neredeyse tamamı hasarsız ve 48 saat içinde teslim edilmiş."
-                },
-                "Fiyat & Performans": {
-                    "skor": "7.8",
-                    "neden": "Malzemeye göre hakkını veriyor ancak indirim dönemlerinde kaçırılmamalı."
-                }
-            },
-            
-            "zamanla_degisim": [
-                {"ay": "Ocak", "skor": 8.0}, {"ay": "Şubat", "skor": 8.2}, {"ay": "Mart", "skor": 8.0},
-                {"ay": "Nisan", "skor": 7.9}, {"ay": "Mayıs", "skor": 8.5}, {"ay": "Haziran", "skor": 8.3},
-                {"ay": "Temmuz", "skor": 7.5}, {"ay": "Ağustos", "skor": 7.8}, {"ay": "Eylül", "skor": 8.2},
-                {"ay": "Ekim", "skor": 8.4}, {"ay": "Kasım", "skor": 8.6}, {"ay": "Aralık", "skor": 8.8}
-            ]
-        }
+        optimize_veri = self._metin_optimize_et(urun_icerigi)
         
-        return sahte_analiz_paketi
+        prompt = f"""
+        Sen profesyonel bir e-ticaret analistisin. Sana gelen metnin içeriğindeki 
+        gerçek kullanıcı yorumlarını, müşteri geri bildirimlerini bul, cımbızla seç ve analiz et.
+        Eğer metinde yeterli yorum yoksa, şemayı mantıklı varsayılan verilerle doldur ancak 'ozet' kısmında bunu jüriye belirt.
+
+        Kaynak Veri:
+        {optimize_veri}
+        """
+        
+        try:
+            config = types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=GeminiAnalizSchema,
+                temperature=0.1
+            )
+            response = self.client.models.generate_content(
+                model=self.model_name, 
+                contents=prompt,
+                config=config
+            )
+            
+            raw_data = json.loads(response.text)
+            
+            final_res = {
+                "ozet": raw_data.get("ozet") or "Ürün analizi başarıyla gerçekleştirildi.",
+                "artilar": raw_data.get("artilar") or ["Genel kullanım kolaylığı"],
+                "eksiler": raw_data.get("eksiler") or ["Belirgin bir olumsuzluk belirtilmemiş"],
+                "dikkat_edilmesi_gereken": raw_data.get("dikkat_edilmesi_gereken") or "Kendi bedeninizi/numaranızı tercih edebilirsiniz.",
+                "puanlar": {
+                    "Genel Not": {
+                        "skor": raw_data["puanlar"]["genel"]["skor"],
+                        "neden": raw_data["puanlar"]["genel"]["neden"]
+                    },
+                    "Kumaş & Kalite": {
+                        "skor": raw_data["puanlar"]["kalite"]["skor"],
+                        "neden": raw_data["puanlar"]["kalite"]["neden"]
+                    },
+                    "Kargo & Paket": {
+                        "skor": raw_data["puanlar"]["kargo"]["skor"],
+                        "neden": raw_data["puanlar"]["kargo"]["neden"]
+                    },
+                    "Fiyat & Performans": {
+                        "skor": raw_data["puanlar"]["fiyat"]["skor"],
+                        "neden": raw_data["puanlar"]["fiyat"]["neden"]
+                    }
+                },
+                "zamanla_degisim": raw_data.get("zamanla_degisim") or []
+            }
+            
+            return final_res
+            
+        except Exception as e:
+            return {"hata": f"Yapay Zeka Çözümleme Hatası: {str(e)}"}
 
     def chat_ile_sor(self, soru, context):
-        chat_prompt = f"Şu ürün bilgisine göre soruyu cevapla: {context}\nSoru: {soru}"
-        response = self.client.models.generate_content(model=self.model_name, contents=chat_prompt)
-        return response.text
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name, 
+                contents=f"Bağlam (Ürün Özeti): {context}\n\nKullanıcı Sorusu: {soru}\n\nLütfen bu ürün özetine sadık kalarak kullanıcıya asistan gibi cevap ver."
+            )
+            return response.text
+        except Exception as e:
+            return f"Şu an teknik bir aksaklık nedeniyle sorunuz yanıtlanamıyor. (Hata: {str(e)})"
 
-    def kiyasla(self, urun1_rapor, urun2_rapor):
-        hazir_kiyaslama = """
-        ### 📊 Karşılaştırma Sonucu:
-        **1. Ürün (Kaliteli Seçenek):** Kumaş kalitesi olarak önde ancak bütçeyi zorlayabilir.
-        **2. Ürün (Ekonomik Seçenek):** Fiyatı çok uygun ancak uzun vadede renk solması yapabilir.
-        """
-        return hazir_kiyaslama
+    def kiyasla(self, urun1, urun2):
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name, 
+                contents=f"Aşağıdaki iki ürüne ait ham verileri ve kullanıcı deneyimlerini kıyasla. Karşılaştırmalı bir analiz sun:\n\nÜrün 1: {str(urun1)[:3000]}\n\nÜrün 2: {str(urun2)[:3000]}"
+            )
+            return response.text
+        except Exception as e:
+            return f"Kıyaslama motoru şu an başlatılamıyor. (Hata: {str(e)})"
