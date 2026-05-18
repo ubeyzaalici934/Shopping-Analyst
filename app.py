@@ -16,7 +16,6 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
         color: #f3f4f6 !important;
     }
-    
     .brand-container {
         text-align: center;
         padding-top: 50px;
@@ -39,7 +38,6 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: 3px;
     }
-    
     div[data-testid="stTabs"] {
         background-color: transparent !important;
     }
@@ -65,7 +63,6 @@ st.markdown("""
         background-color: #1e1b4b !important; 
         border: 1px solid #4338ca !important; 
     }
-    
     div[data-testid="stTextInput"] > div {
         background-color: #11131e !important;
         border: 1px solid #222538 !important;
@@ -84,7 +81,6 @@ st.markdown("""
     div[data-testid="stTextInput"] input::placeholder {
         color: #4b5563 !important;
     }
-    
     .metric-card {
         background-color: #11131e !important;
         padding: 26px;
@@ -122,7 +118,6 @@ st.markdown("""
         line-height: 1.5;
         margin: 0;
     }
-    
     .stButton>button { 
         border-radius: 16px; 
         background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%) !important;
@@ -138,6 +133,24 @@ st.markdown("""
         transform: scale(1.01);
         box-shadow: 0 4px 25px rgba(99, 102, 241, 0.4) !important;
     }
+            .custom-badge-pos {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    color: #10b981 !important;
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+.custom-badge-neg {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    color: #ef4444 !important;
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -182,9 +195,9 @@ with tab_single:
 
     if analiz_btn and url:
         if api_hata_durumu:
-            st.error("🚨 **Sistem Hatası:** `GEMINI_API_KEY` yüklenemedi!")
+            st.error("**Sistem Hatası:** `GEMINI_API_KEY` yüklenemedi!")
         else:
-            with st.spinner("Yorum verileri işleniyor ve analiz ediliyor..."):
+            with st.spinner("Yorum verileri analiz ediliyor..."):
                 url_lower = url.lower()
                 if "krem" in url_lower or "nemlendirici" in url_lower:
                     hedef_dosya = "krem.html"
@@ -196,16 +209,15 @@ with tab_single:
                 scraper_sonuc = ham_metin_ayıkla(hedef_dosya)
                 
                 if scraper_sonuc["durum"] == "Başarılı":
-                    # SCRAPER'DAN GELEN METNE YORUMLARI ENJEKTE EDİYORUZ
                     zenginlestirilmis_metin = yorumlari_kurtar_ve_birlestir(hedef_dosya, scraper_sonuc["saf_metin"])
                     
                     if len(zenginlestirilmis_metin.strip()) == 0:
-                        st.error(f"🚨 Dosya İçeriği Boş: '{hedef_dosya}' dosyasında okunabilir metin veya yorum yok.")
+                        st.error(f"Dosya İçeriği Boş: '{hedef_dosya}' dosyasında okunabilir metin veya yorum yok.")
                     else:
                         st.session_state.analiz_sonucu = analyzer.urun_analiz_et(zenginlestirilmis_metin)
                         st.session_state.sohbet_gecmisi = []
                 else:
-                    st.error(f"🚨 Dosya Hatası: Sunum için gerekli '{hedef_dosya}' yerel veri kaynağı bulunamadı!")
+                    st.error(f"Dosya Hatası: Sunum için gerekli '{hedef_dosya}' yerel veri kaynağı bulunamadı!")
                     st.session_state.analiz_sonucu = None
         
     # Rapor Gösterim Alanı
@@ -220,11 +232,11 @@ with tab_single:
             # Kartlar Alanı
             m1, m2, m3, m4 = st.columns(4)
             with m1:
-                st.markdown(f'<div class="metric-card"><p class="metric-title">Genel Not</p><p class="metric-value">{res["puanlar"]["Genel Not"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Genel Not"]["neden"]}</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p class="metric-title">Genel</p><p class="metric-value">{res["puanlar"]["Genel"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Genel"]["neden"]}</p></div>', unsafe_allow_html=True)
             with m2:
-                st.markdown(f'<div class="metric-card"><p class="metric-title">Kumaş & Kalite</p><p class="metric-value">{res["puanlar"]["Kumaş & Kalite"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Kumaş & Kalite"]["neden"]}</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p class="metric-title">Kalite</p><p class="metric-value">{res["puanlar"]["Kalite"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Kalite"]["neden"]}</p></div>', unsafe_allow_html=True)
             with m3:
-                st.markdown(f'<div class="metric-card"><p class="metric-title">Kargo & Paket</p><p class="metric-value">{res["puanlar"]["Kargo & Paket"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Kargo & Paket"]["neden"]}</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p class="metric-title">Kargo</p><p class="metric-value">{res["puanlar"]["Kargo"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Kargo"]["neden"]}</p></div>', unsafe_allow_html=True)
             with m4:
                 st.markdown(f'<div class="metric-card"><p class="metric-title">Fiyat & Performans</p><p class="metric-value">{res["puanlar"]["Fiyat & Performans"]["skor"]}</p><p class="metric-desc">{res["puanlar"]["Fiyat & Performans"]["neden"]}</p></div>', unsafe_allow_html=True)
 
@@ -236,14 +248,15 @@ with tab_single:
 
             st.divider()
 
-            # Detaylar ve Grafik Yan Yana
             col_sol, col_sag = st.columns(2)
             with col_sol:
                 st.success("### ✅ Olumlu Özellikler")
-                for a in res['artilar']: st.markdown(f"• {a}")
+                for a in res.get('artilar', []):                
+                    st.markdown(f'<div class="custom-badge-pos">✨ {a}</div>', unsafe_allow_html=True)
                 st.error("### ❌ Olumsuz Özellikler")
-                for e in res['eksiler']: st.markdown(f"• {e}")
-                
+                for e in res.get('eksiler', []): 
+                    st.markdown(f'<div class="custom-badge-neg">⚠️ {e}</div>', unsafe_allow_html=True)                
+           
             with col_sag:
                 st.markdown("### 📈 Müşteri Memnuniyet Grafiği")
                 trend_verisi = res.get("zamanla_degisim", [])
@@ -262,9 +275,9 @@ with tab_single:
                         )
                         st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
                     else:
-                        st.info("📊 Zaman trendi sütun yapısı çözümlenemedi.")
+                        st.info("Zaman trendi sütun yapısı çözümlenemedi.")
                 else:
-                    st.info("📊 Anlamlı bir zaman trendi çıkarılamadı.")
+                    st.info("Anlamlı bir zaman trendi çıkarılamadı.")
 
             st.divider()
 
@@ -284,19 +297,18 @@ with tab_single:
                         st.session_state.sohbet_gecmisi.append({"role": "assistant", "content": cevap})
                 st.rerun()
 
-# --- TAB 2: KARŞILAŞTIRMA MOTORU ---
 with tab_bench:
-    st.subheader("⚔️ İki Farklı Ürünü Karşılaştır")
+    st.markdown('<h3 style="text-align: center; font-family: \'Space Grotesk\', sans-serif; color: #ffffff; margin-bottom: 20px;">⚔️ İki Farklı Ürünü Karşılaştır</h3>', unsafe_allow_html=True)    
     col_a, col_b = st.columns(2)
     with col_a: link_a = st.text_input("1. Ürünün Linki", placeholder="İlk linki bırakın...", key="bench_url_a")
     with col_b: link_b = st.text_input("2. Ürünün Linki", placeholder="İkinci linki bırakın...", key="bench_url_b")
     
-    if st.button("🏆 Analitiği Kıyasla", use_container_width=True):
+    if st.button("🏆 Ürünleri Kıyasla", use_container_width=True):
         if link_a and link_b:
             if api_hata_durumu:
-                st.error("🚨 **Sistem Hatası:** API yapılandırması eksik.")
+                st.error("**Sistem Hatası:** API yapılandırması eksik.")
             else:
-                with st.spinner("İki ürünün semantik farkları hesaplanıyor..."):
+                with st.spinner("İki ürünün farkları hesaplanıyor..."):
                     la_lower = link_a.lower()
                     dosya_a = "krem.html" if "krem" in la_lower else ("elbise.html" if "elbise" in la_lower else "telefon.html")
                     
@@ -307,7 +319,6 @@ with tab_bench:
                     sc_b = ham_metin_ayıkla(dosya_b)
                     
                     if sc_a["durum"] == "Başarılı" and sc_b["durum"] == "Başarılı":
-                        # İKİ DOSYA İÇİN DE YORUMLARI KURTARIYORUZ
                         zengin_metin_a = yorumlari_kurtar_ve_birlestir(dosya_a, sc_a["saf_metin"])
                         zengin_metin_b = yorumlari_kurtar_ve_birlestir(dosya_b, sc_b["saf_metin"])
                         
@@ -315,6 +326,6 @@ with tab_bench:
                         st.success("### 🧠 Yapay Zeka Karşılaştırma Raporu")
                         st.write(rapor)
                     else:
-                        st.error("🚨 Karşılaştırma için gerekli kaynak HTML dosyaları bulunamadı.")
+                        st.error("Karşılaştırma için gerekli kaynak HTML dosyaları bulunamadı.")
         else:
             st.warning("Lütfen iki ürünün de link alanlarını doldurun.")
