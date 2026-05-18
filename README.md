@@ -9,6 +9,8 @@ Ekran Görüntüleri:
 
 Krem linki: https://www.trendyol.com/dermokil/nemlendirici-ve-rahatlatici-etkili-dogal-aloe-vera-jel-300-ml-p-101770923?boutiqueId=61&merchantId=115550
 
+Krem 2 linki :https://www.trendyol.com/dove/nemlendirici-sivi-sabun-caring-1-4-nemlendirici-krem-etkili-450-ml-x3-adet-p-40433618?boutiqueId=61&merchantId=378048
+
 Elbise1 l linki: https://www.trendyol.com/hiccup/kalp-yaka-desenli-maxi-elbise-p-921394163?boutiqueId=61&merchantId=938209
 
 Elbise 2 linki:https://www.trendyol.com/grimelange/pani-aire-kadin-kayik-yaka-ustu-esnek-viskon-alt-kismi-genis-poplin-dokuma-kolsuz-siyah-elbise-p-897929300?boutiqueId=61&merchantId=165724 
