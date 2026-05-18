@@ -1,8 +1,6 @@
 streamlit
-google-genai
-python-dotenv
 pandas
 plotly
-pillow
+google-genai
+python-dotenv
 pydantic
-BeautifulSoup
