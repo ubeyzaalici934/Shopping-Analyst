@@ -32,6 +32,19 @@ class GeminiAnalizSchema(BaseModel):
     dikkat_edilmesi_gereken: str = Field(description="Satın alma öncesi hayati kullanıcı uyarısı.")
     puanlar: KategoriPuanlari
     zamanla_degisim: List[ZamanTrendItem]
+
+class KriterKiyaslama(BaseModel):
+    kriter_adi: str = Field(description="İncelenen ürün tipine göre tamamen dinamik belirlenmiş kriter adı. Örn: Krem için 'Cilt Etkisi', Elbise için 'Kumaş Kalitesi', Telefon için 'Batarya Ömrü'")
+    urun_a_deger: str = Field(description="Ürün 1 için bu kriterdeki durum özeti veya skoru.")
+    urun_a_durum: str = Field(description="Ürün 1'in bu kriterdeki durumu avantajlıysa 'pozitif', dezavantajlıysa 'negatif'.")
+    urun_b_deger: str = Field(description="Ürün 2 için bu kriterdeki durum özeti veya skoru.")
+    urun_b_durum: str = Field(description="Ürün 2'nin bu kriterdeki durumu avantajlıysa 'pozitif', dezavantajlıysa 'negatif'.")
+
+class GeminiKiyaslaSchema(BaseModel):
+    nihai_oneri: str = Field(description="MCDM mantığıyla hangi ürünün neden seçilmesi gerektiğini açıklayan rapor metni. Ürün isimleri yerine sadece 'Ürün 1' ve 'Ürün 2' ifadelerini kullanmalıdır.")
+    bulgular_sol: List[str] = Field(description="Sol sütunda gösterilecek 2 adet çarpıcı karşılaştırma bulgusu.")
+    bulgular_sag: List[str] = Field(description="Sağ sütunda gösterilecek 2 adet çarpıcı karşılaştırma bulgusu.")
+    matris: List[KriterKiyaslama]
     
 class ShoppingAnalyzer:
     def __init__(self, model_name='gemini-2.5-flash'): 
@@ -127,7 +140,8 @@ class ShoppingAnalyzer:
                         "neden": raw_data["puanlar"]["fiyat"]["neden"]
                     }
                 },
-                "zamanla_degisim": raw_data.get("zamanla_degisim") or []
+                "zamanla_degisim": raw_data.get("zamanla_degisim") or [],
+                "ham_metin_kaynagi": optimize_veri
             }
             
             return final_res
@@ -137,21 +151,24 @@ class ShoppingAnalyzer:
 
     def chat_ile_sor(self, soru, context_dict):
         try:
-            # Gelen karmaşık JSON verisini asistanın hatasız okuyabileceği rapora dönüştürüyoruz
             artilar = ", ".join(context_dict.get("artilar", []))
             eksiler = ", ".join(context_dict.get("eksiler", []))
             ozet = context_dict.get("ozet", "")
             dikkat = context_dict.get("dikkat_edilmesi_gereken", "")
+            dinamik_ham_metin = context_dict.get("ham_metin_kaynagi", "")
             
             puan_str = ""
             for k, v in context_dict.get("puanlar", {}).items():
                 puan_str += f"- {k}: {v.get('skor')} ({v.get('neden')})\n"
 
             prompt = f"""
-            Sen lüks bir e-ticaret platformunda görev yapan, profesyonel ve tarafsız bir Alışveriş Danışmanısın.
-            Görevin, müşterinin ürün hakkındaki sorusunu SADECE aşağıdaki analiz verilerine dayanarak yanıtlamaktır.
+            Sen e-ticaret platformlarında görev yapan, son derece profesyonel, analitik ve tarafsız bir Alışveriş Danışmanısın.
+            Görevin, kullanıcının ürün hakkındaki sorusunu SADECE ve SADECE sana sağlanan analiz raporuna ve ürünün ham kaynak metnine dayanarak yanıtlamaktır.
             
-            [ÜRÜN ANALİZ RAPORU]
+            [DİNAMİK ÜRÜN HAM METNİ (GERÇEK VERİ)]
+            {dinamik_ham_metin}
+            
+            [SİSTEM ÖZET ANALİZ RAPORU]
             - Özet Değerlendirme: {ozet}
             - Olumlu Kullanıcı Deneyimleri: {artilar}
             - Kronik Sorunlar / Eksiler: {eksiler}
@@ -159,7 +176,7 @@ class ShoppingAnalyzer:
             - Detaylı Kategori Skorları:\n{puan_str}
             
             [TALİMATLAR]
-            1. Yukarıda verilen analiz verilerinin dışına asla çıkma, kafandan bilgi veya özellik uydurma.
+            1. Kullanıcı sana fiyat, sepet oranları, pil, mililitre, beden, marka, satıcı veya kronik şikayet sorduğunda, yukarıdaki [DİNAMİK ÜRÜN HAM METNİ] alanını satır satır tara ve YALNIZCA o an incelenen ürüne ait gerçek sayısal/metinsel verilerle cevap ver. Kafandan asla bilgi uydurma, başka ürünlerden veri karıştırma.
             2. Müşteriye samimi ve profesyonel bir üslupla, kısa, net ve maddeler halinde cevap ver.
             
             Müşteri Sorusu: {soru}
@@ -179,10 +196,35 @@ class ShoppingAnalyzer:
                 
     def kiyasla(self, urun1, urun2):
         try:
+            prompt = f"""
+            Sen kıdemli bir Endüstri Mühendisi ve Karar Destek Sistemleri (DSS) uzmanısın.
+            Sana verilen iki farklı e-ticaret ürün içeriğini Çok Kriterli Karar Analizi (MCDM) metodolojisiyle kıyasla.
+            
+            [⚠️ 1 NUMARALI KATEGORİ TALİMATI]
+            Gelen ham metinleri okuyarak ürünlerin kategorisini (Kozmetik/Krem mi, Tekstil/Elbise mi yoksa Elektronik/Telefon mu) tespit et. 
+            Kıyaslama matrisindeki 'kriter_adi' alanlarını sabit tutma, tamamen o kategoriye uygun dinamik kriterler olarak belirle! 
+            (Örn: Krem için 'Cilt Hassasiyeti', 'Nemlendirme Oranı', 'Koku ve Doku'; Elbise için 'Kumaş Kalitesi', 'Beden/Kalıp Uyumu'; Telefon için 'Batarya Ömrü', 'Teknik Donanım Sağlığı').
+
+            [⚠️ 2 NUMARALI İSİMLENDİRME TALİMATI]
+            'nihai_oneri' alanındaki analitik raporda kesinlikle ürünlerin gerçek marka/model isimlerini (iPhone, Samsung, Dermokil, Hiccup vb.) veya "A/B Alternatifi" gibi terimleri KULLANMA. 
+            Metnin genelinde ilk üründen bahsederken SADECE ve SADECE "Ürün 1", ikinci üründen bahsederken SADECE ve SADECE "Ürün 2" de. Suffix eklerini (Ürün 1'in, Ürün 2'ye vb.) buna göre kurgula.
+
+            Ürün 1 (A Alternatifi - Hedef Ürün):
+            {str(urun1)}
+
+            Ürün 2 (B Alternatifi - Rakip Ürün):
+            {str(urun2)}
+            """
+            config = types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=GeminiKiyaslaSchema,
+                temperature=0.0
+            )
             response = self.client.models.generate_content(
                 model=self.model_name, 
-                contents=f"Aşağıdaki iki ürüne ait ham verileri ve kullanıcı deneyimlerini kıyasla. Karşılaştırmalı bir analiz sun:\n\nÜrün 1: {str(urun1)[:3000]}\n\nÜrün 2: {str(urun2)[:3000]}"
+                contents=prompt,
+                config=config
             )
-            return response.text
+            return json.loads(response.text)
         except Exception as e:
-            return f"Kıyaslama motoru şu an başlatılamıyor. (Hata: {str(e)})"
+            return {"hata": f"Kıyaslama motoru şu an başlatılamıyor. (Hata: {str(e)})"}

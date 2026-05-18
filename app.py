@@ -5,12 +5,13 @@ import re
 from analyzer import ShoppingAnalyzer
 from scraper import ham_metin_ayıkla
 
-st.set_page_config(page_title="Alışveriş Danışmanım", layout="wide", page_icon="🛒")
+st.set_page_config(page_title="Alışveriş Danışmanım", layout="wide", page_icon="🛒", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
     
+    /* Genel tasarım ayarlamaları*/
     .stApp {
         background-color: #0b0d13 !important;
         font-family: 'Inter', sans-serif;
@@ -38,6 +39,7 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: 3px;
     }
+    /* Sekmeler ve Link Giriş Kutusu */
     div[data-testid="stTabs"] {
         background-color: transparent !important;
     }
@@ -81,6 +83,7 @@ st.markdown("""
     div[data-testid="stTextInput"] input::placeholder {
         color: #4b5563 !important;
     }
+    /* Puan kartları tasarım ve ayarları */
     .metric-card {
         background-color: #11131e !important;
         padding: 26px;
@@ -118,6 +121,7 @@ st.markdown("""
         line-height: 1.5;
         margin: 0;
     }
+    /* Analiz butonu tasarım */            
     .stButton>button { 
         border-radius: 16px; 
         background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%) !important;
@@ -132,27 +136,111 @@ st.markdown("""
     .stButton>button:hover {
         transform: scale(1.01);
         box-shadow: 0 4px 25px rgba(99, 102, 241, 0.4) !important;
+    }        
+    .custom-badge-pos {
+        background-color: rgba(16, 185, 129, 0.1) !important;
+        border: 1px solid rgba(16, 185, 129, 0.2) !important;
+        color: #10b981 !important;
+        padding: 10px 16px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        font-size: 14px;
     }
-            .custom-badge-pos {
-    background-color: rgba(16, 185, 129, 0.1) !important;
-    border: 1px solid rgba(16, 185, 129, 0.2) !important;
-    color: #10b981 !important;
-    padding: 10px 16px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-.custom-badge-neg {
-    background-color: rgba(239, 68, 68, 0.1) !important;
-    border: 1px solid rgba(239, 68, 68, 0.2) !important;
-    color: #ef4444 !important;
-    padding: 10px 16px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
+    .custom-badge-neg {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        border: 1px solid rgba(239, 68, 68, 0.2) !important;
+        color: #ef4444 !important;
+        padding: 10px 16px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    /* Yan Panel Emniyet ve Sıkıştırma Kodları */
+    [data-testid="stSidebarResizer"] {
+        display: none !important;
+        pointer-events: none !important;
+    } 
+    .st-emotion-cache-kgp69n, .st-emotion-cache-1wrcr25 {
+        cursor: default !important;
+    }  
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 1.5rem !important;
+        padding-bottom: 0rem !important;
+    } 
+    [data-testid="stSidebarUserContent"] div.element-container {
+        margin-bottom: 4px !important;
+    }    
+    [data-testid="stSidebarUserContent"] hr {
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    [data-testid="stSidebar"] h2 {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+        font-size: 24px !important; 
+    }
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 0px !important;
+        margin-top: -30px !important; 
+    }
+    div[data-testid="stSidebarBlockContainer"] {
+        padding-top: 0px !important;
+        margin-top: 0px !important;
+    }
+    [data-testid="stSidebar"] h2:first-of-type {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+    }
+    /* yan panel ok butonu tasarım */
+    @keyframes neonPulse {
+        0% { box-shadow: 0 0 8px rgba(99, 102, 241, 0.5); border-color: #6366f1; }
+        50% { box-shadow: 0 0 22px rgba(99, 102, 241, 1); border-color: #818cf8; }
+        100% { box-shadow: 0 0 8px rgba(99, 102, 241, 0.5); border-color: #6366f1; }
+    }
+    [data-testid="stSidebarCollapseButton"] button, 
+    div[data-testid="collapsedControl"] button,
+    [data-testid="collapsedControl"] {
+        background-color: #1e1b4b !important; /* Koyu mor çekirdek */
+        border: 2px solid #6366f1 !important; /* Kalınlaştırılmış parlak çerçeve */
+        color: #ffffff !important; /* Oku bembeyaz yapar */
+        border-radius: 50% !important; /* Tam yuvarlak yapı */
+        animation: neonPulse 2s infinite ease-in-out !important; /* 💥 Durmaksızın parlar! */
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button:hover, 
+    div[data-testid="collapsedControl"] button:hover {
+        transform: scale(1.15) !important;
+        background-color: #4f46e5 !important;
+        box-shadow: 0 0 30px rgba(99, 102, 241, 1) !important;
+        animation: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# Yan Panel
+with st.sidebar:
+    st.markdown("## Sistem Tanımı ")
+    # Veri Kaynağı Seçici
+    ops_mode = st.selectbox("Veri Kaynağı Seçimi:", ["Simülasyon Modu (Yerel HTML)", "Canlı Veri Modu (API Gateway)"])
+    if ops_mode == "Canlı Veri Modu (API Gateway)":
+        st.markdown("""
+            <div style="text-align: justify; background-color: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; margin-top: 10px; margin-bottom: 10px;">
+                🌐 <b>Üretim Aşamasında:</b> Sistem API Gateway üzerinden anlık veri çekmeye hazır mimariye geçer. Sunum stabilitesi ve teknik demo güvenliği için şu an yerel veri kümesi simülasyonu aktiftir.
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("**Metodoloji:**")
+    st.caption("Doğal Dil İşleme (NLP) Tabanlı Duygu Madenciliği & Karar Destek Sistemleri (DSS).")
+    st.markdown("---")
+    st.markdown("**Teknoloji:**")
+    st.caption("Gemini 2.5 Flash LLM, Pydantic Veri Doğrulama, Streamlit Cloud Altyapısı.")
+    st.markdown("---")
+    st.markdown("**👥 Proje Ekibi:**")
+    st.caption("* Hediye Ekinci  \n* Ümmü Beyza Alıcı")
 
 def yorumlari_kurtar_ve_birlestir(dosya_adi, scraper_metni):
     """
@@ -182,6 +270,7 @@ except ValueError:
     
 if "analiz_sonucu" not in st.session_state: st.session_state.analiz_sonucu = None
 if "sohbet_gecmisi" not in st.session_state: st.session_state.sohbet_gecmisi = []
+if "kiyas_sonucu" not in st.session_state: st.session_state.kiyas_sonucu = None
 
 st.markdown('<div class="brand-container"><h1 class="brand-title">ALIŞVERİŞ DANIŞMANIM</h1><p class="brand-subtitle">Ürün Analizi</p></div>', unsafe_allow_html=True)
 
@@ -199,12 +288,14 @@ with tab_single:
         else:
             with st.spinner("Yorum verileri analiz ediliyor..."):
                 url_lower = url.lower()
-                if "krem" in url_lower or "nemlendirici" in url_lower:
-                    hedef_dosya = "krem.html"
-                elif "elbise" in url_lower or "giyim" in url_lower:
-                    hedef_dosya = "elbise.html"
-                else:
-                    hedef_dosya = "telefon.html"
+                
+                # 🚀 DÜZELTİLDİ: '1' ekleri tamamen temizlendi ve kontrol önceliği 2. dosyalara verildi
+                if "krem2" in url_lower: hedef_dosya = "krem2.html"
+                elif "krem" in url_lower: hedef_dosya = "krem.html"
+                elif "elbise2" in url_lower: hedef_dosya = "elbise2.html"
+                elif "elbise" in url_lower: hedef_dosya = "elbise.html"
+                elif "telefon2" in url_lower: hedef_dosya = "telefon2.html"
+                else: hedef_dosya = "telefon.html"
 
                 scraper_sonuc = ham_metin_ayıkla(hedef_dosya)
                 
@@ -303,17 +394,28 @@ with tab_bench:
     with col_a: link_a = st.text_input("1. Ürünün Linki", placeholder="İlk linki bırakın...", key="bench_url_a")
     with col_b: link_b = st.text_input("2. Ürünün Linki", placeholder="İkinci linki bırakın...", key="bench_url_b")
     
-    if st.button("🏆 Ürünleri Kıyasla", use_container_width=True):
+    if st.button("Ürünleri Kıyasla", use_container_width=True):
         if link_a and link_b:
             if api_hata_durumu:
                 st.error("**Sistem Hatası:** API yapılandırması eksik.")
             else:
                 with st.spinner("İki ürünün farkları hesaplanıyor..."):
                     la_lower = link_a.lower()
-                    dosya_a = "krem.html" if "krem" in la_lower else ("elbise.html" if "elbise" in la_lower else "telefon.html")
+                    
+                    if "krem2" in la_lower: dosya_a = "krem2.html"
+                    elif "krem" in la_lower: dosya_a = "krem.html"
+                    elif "elbise2" in la_lower: dosya_a = "elbise2.html"
+                    elif "elbise" in la_lower: dosya_a = "elbise.html"
+                    elif "telefon2" in la_lower: dosya_a = "telefon2.html"
+                    else: dosya_a = "telefon.html"
                     
                     lb_lower = link_b.lower()
-                    dosya_b = "krem.html" if "krem" in lb_lower else ("elbise.html" if "elbise" in lb_lower else "telefon.html")
+                    if "krem2" in lb_lower: dosya_b = "krem2.html"
+                    elif "krem" in lb_lower: dosya_b = "krem.html"
+                    elif "elbise2" in lb_lower: dosya_b = "elbise2.html"
+                    elif "elbise" in lb_lower: dosya_b = "elbise.html"
+                    elif "telefon2" in lb_lower: dosya_b = "telefon2.html"
+                    else: dosya_b = "telefon.html"
                     
                     sc_a = ham_metin_ayıkla(dosya_a)
                     sc_b = ham_metin_ayıkla(dosya_b)
@@ -322,10 +424,44 @@ with tab_bench:
                         zengin_metin_a = yorumlari_kurtar_ve_birlestir(dosya_a, sc_a["saf_metin"])
                         zengin_metin_b = yorumlari_kurtar_ve_birlestir(dosya_b, sc_b["saf_metin"])
                         
-                        rapor = analyzer.kiyasla(str(zengin_metin_a), str(zengin_metin_b))
-                        st.success("### 🧠 Yapay Zeka Karşılaştırma Raporu")
-                        st.write(rapor)
+                        st.session_state.kiyas_sonucu = analyzer.kiyasla(str(zengin_metin_a), str(zengin_metin_b))
                     else:
-                        st.error("Karşılaştırma için gerekli kaynak HTML dosyaları bulunamadı.")
+                        st.error("Karşılaştırma için gerekli kaynak HTML dosyaları bulunamadı. Lütfen klasörde telefon.html/telefon2.html vb. dosyaların olduğundan emin olun.")
         else:
             st.warning("Lütfen iki ürünün de link alanlarını doldurun.")
+
+    if st.session_state.kiyas_sonucu:
+        bench_res = st.session_state.kiyas_sonucu
+        
+        if "hata" in bench_res:
+            st.error(bench_res["hata"])
+        else:
+            st.markdown("### Ürün Kıyaslama Analizi")
+            st.caption("Seçilen iki ürünün özellik matrisi üzerinden karşılaştırılması:")
+
+            rows_html = ""
+            for item in bench_res.get("matris", []):
+                bg_a = "rgba(16, 185, 129, 0.08)" if item.get("urun_a_durum") == "pozitif" else "rgba(239, 68, 68, 0.08)"
+                color_a = "#10b981" if item.get("urun_a_durum") == "pozitif" else "#ef4444"
+                
+                bg_b = "rgba(16, 185, 129, 0.08)" if item.get("urun_b_durum") == "pozitif" else "rgba(239, 68, 68, 0.08)"
+                color_b = "#10b981" if item.get("urun_b_durum") == "pozitif" else "#ef4444"
+                
+                rows_html += f'<tr style="border-bottom: 1px solid #1f2335;"><td style="padding: 14px; font-weight: 600; color: #9ca3af;">{item.get("kriter_adi")}</td><td style="padding: 14px; background-color: {bg_a}; color: {color_a}; font-weight: bold;">{item.get("urun_a_deger")}</td><td style="padding: 14px; background-color: {bg_b}; color: {color_b}; font-weight: bold;">{item.get("urun_b_deger")}</td></tr>'
+
+            comparison_table_html = f'<div style="overflow-x:auto;"><table style="width:100%; table-layout: fixed; border-collapse: collapse; background-color: #11131e; border: 1px solid #1f2335; border-radius: 16px; overflow: hidden; font-family: \'Inter\', sans-serif; color: #ffffff; font-size: 14px;"><thead><tr style="background-color: #1e1b4b; border-bottom: 2px solid #4338ca; text-align: left;"><th style="padding: 16px; font-family: \'Space Grotesk\', sans-serif; font-weight: 600; color: #a5b4fc; width: 20%;">Kıyaslama Kriterleri</th><th style="padding: 16px; font-family: \'Space Grotesk\', sans-serif; font-weight: 600; color: #ffffff; width: 40%;">Ürün 1 (Hedef Ürün)</th><th style="padding: 16px; font-family: \'Space Grotesk\', sans-serif; font-weight: 600; color: #ffffff; width: 40%;">Ürün 2 (Rakip Ürün)</th></tr></thead><tbody>{rows_html}</tbody></table></div>'
+            st.markdown(comparison_table_html, unsafe_allow_html=True)
+            
+            st.markdown("#### 📌 Karşılaştırma Sonucu")
+            col1, col2 = st.columns(2)
+
+            with col1:
+                for b_sol in bench_res.get('bulgular_sol', []):
+                    st.markdown(f"* {b_sol}")
+
+            with col2:
+                for b_sag in bench_res.get('bulgular_sag', []):
+                    st.markdown(f"* {b_sag}")
+
+            report_html = f'<div style="background: linear-gradient(135deg, #1e1b4b 0%, #11131e 100%); border: 1px solid #4338ca; padding: 20px; border-radius: 18px; margin-top: 15px;"><h4 style="margin-top: 0px; font-family: \'Space Grotesk\', sans-serif; color: #a5b4fc; font-size: 15px;">🔮 REVIEWMIND NİHAİ KARAR DESTEK RAPORU</h4><p style="text-align: justify; color: #e5e7eb; font-size: 13.5px; line-height: 1.6; margin-bottom: 0px;"><b>Analitik Öneri:</b> {bench_res.get("nihai_oneri")}</p></div>'
+            st.markdown(report_html, unsafe_allow_html=True)
