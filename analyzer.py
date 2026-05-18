@@ -94,7 +94,7 @@ class ShoppingAnalyzer:
             config = types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=GeminiAnalizSchema,
-                temperature=0.1
+                temperature=0.0
             )
             response = self.client.models.generate_content(
                 model=self.model_name, 
@@ -135,16 +135,48 @@ class ShoppingAnalyzer:
         except Exception as e:
             return {"hata": f"Yapay Zeka Çözümleme Hatası: {str(e)}"}
 
-    def chat_ile_sor(self, soru, context):
+    def chat_ile_sor(self, soru, context_dict):
         try:
+            # Gelen karmaşık JSON verisini asistanın hatasız okuyabileceği rapora dönüştürüyoruz
+            artilar = ", ".join(context_dict.get("artilar", []))
+            eksiler = ", ".join(context_dict.get("eksiler", []))
+            ozet = context_dict.get("ozet", "")
+            dikkat = context_dict.get("dikkat_edilmesi_gereken", "")
+            
+            puan_str = ""
+            for k, v in context_dict.get("puanlar", {}).items():
+                puan_str += f"- {k}: {v.get('skor')} ({v.get('neden')})\n"
+
+            prompt = f"""
+            Sen lüks bir e-ticaret platformunda görev yapan, profesyonel ve tarafsız bir Alışveriş Danışmanısın.
+            Görevin, müşterinin ürün hakkındaki sorusunu SADECE aşağıdaki analiz verilerine dayanarak yanıtlamaktır.
+            
+            [ÜRÜN ANALİZ RAPORU]
+            - Özet Değerlendirme: {ozet}
+            - Olumlu Kullanıcı Deneyimleri: {artilar}
+            - Kronik Sorunlar / Eksiler: {eksiler}
+            - Kritik Tüketici Uyarısı: {dikkat}
+            - Detaylı Kategori Skorları:\n{puan_str}
+            
+            [TALİMATLAR]
+            1. Yukarıda verilen analiz verilerinin dışına asla çıkma, kafandan bilgi veya özellik uydurma.
+            2. Müşteriye samimi ve profesyonel bir üslupla, kısa, net ve maddeler halinde cevap ver.
+            
+            Müşteri Sorusu: {soru}
+            Alışveriş Danışmanı Yanıtı:
+            """
+            
+            config = types.GenerateContentConfig(temperature=0.1)
+            
             response = self.client.models.generate_content(
                 model=self.model_name, 
-                contents=f"Bağlam (Ürün Özeti): {context}\n\nKullanıcı Sorusu: {soru}\n\nLütfen bu ürün özetine sadık kalarak kullanıcıya asistan gibi cevap ver."
+                contents=prompt,
+                config=config
             )
             return response.text
         except Exception as e:
-            return f"Şu an teknik bir aksaklık nedeniyle sorunuz yanıtlanamıyor. (Hata: {str(e)})"
-
+            return f"Şu an sorunuz yanıtlanamıyor. (Hata: {str(e)})"
+                
     def kiyasla(self, urun1, urun2):
         try:
             response = self.client.models.generate_content(

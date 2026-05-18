@@ -292,7 +292,7 @@ with tab_single:
                 
                 with st.chat_message("assistant"):
                     with st.spinner("Düşünüyorum..."):
-                        cevap = analyzer.chat_ile_sor(soru, res['ozet'])
+                        cevap = analyzer.chat_ile_sor(soru, res)
                         st.write(cevap)
                         st.session_state.sohbet_gecmisi.append({"role": "assistant", "content": cevap})
                 st.rerun()
