@@ -289,7 +289,6 @@ with tab_single:
             with st.spinner("Yorum verileri analiz ediliyor..."):
                 url_lower = url.lower()
                 
-                # 🚀 DÜZELTİLDİ: '1' ekleri tamamen temizlendi ve kontrol önceliği 2. dosyalara verildi
                 if "krem2" in url_lower: hedef_dosya = "krem2.html"
                 elif "krem" in url_lower: hedef_dosya = "krem.html"
                 elif "elbise2" in url_lower: hedef_dosya = "elbise2.html"
