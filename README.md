@@ -1,5 +1,7 @@
-(!!!DÜZENLENECEK)
 # Alışveriş Danışmanım
+
+Site linki:
+https://alisveris-danismanim-h3kzcs6whediye-beyzapqzyjmsmgif4bkw.streamlit.app/
 
 Alışveriş Danışmanım projesi, e-ticaret platformlarındaki karmaşık, manipüle edilmiş veya bilgi kirliliği içeren kullanıcı yorumlarını Doğal Dil İşleme ve Semantik Analiz yöntemleriyle filtreleyerek rasyonel bir satın alma kararı üretmeyi amaçlar. Bu sistem, özellikle tüketicilerin karar verme süreçlerinde yaşadığı aşırı bilgi yüklemesini azaltmayı ve çok kriterli karar analizi metodolojisiyle objektif bir özellik matrisi sunmayı hedefleyen bir çalışmadır.
 
@@ -46,5 +48,3 @@ Teknolojik Altyapı:
 Performans Testi:
 Sistemin kararlılığını ve gecikme sürelerini ölçmek amacıyla yerel HTML dosyası üzerinden 3 ardışık döngülük bir performans testi gerçekleştirilmiştir. Yerel mimari sayesinde scraper ayıklama süresi 0.0273 saniye gibi kısa bir sürede tamamlanırken, ilk döngüde bulut sunucu bağlantısı ve soğuk başlatma nedeniyle en yüksek gecikme 17.27 saniye olarak ölçülmüştür. İkinci döngüde kararlı durum işlem süresi 8.04 saniye olarak gerçekleşmiş, üçüncü döngüde ise modelin bağlam önbellekleme yeteneğinin tetiklenmesiyle en hızlı yanıt süresi 0.29 saniyeye kadar düşmüştür. Yapılan testler sonucunda ortalama işlem süresi 8.53 saniye, veri işleme kapasitesi saniyede 129.27 karakter ve uç değerler arasındaki farktan dolayı standart sapma 8.50 saniye olarak hesaplansa da, sistemin kararlı durum performansı bir karar destek altyapısı için yüksek verimlilik sunmaktadır.
 
-Ekran Görüntüleri: 
-?
