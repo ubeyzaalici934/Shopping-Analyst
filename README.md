@@ -1,14 +1,14 @@
 (!!!DÜZENLENECEK)
 # Alışveriş Danışmanım
 
-Alışveriş Danışmanım projesi, e-ticaret platformlarındaki karmaşık, manipüle edilmiş veya bilgi kirliliği içeren kullanıcı yorumlarını Doğal Dil İşleme ve Semantik Analiz yöntemleriyle filtreleyerek rasyonel bir satın alma kararı üretmeyi amaçlar. Bu sistem, özellikle tüketicilerin karar verme süreçlerinde yaşadığı bilgi aşırı yüklemesini azaltmayı ve Çok Kriterli Karar Analizi metodolojisiyle objektif bir özellik matrisi sunmayı hedefleyen bir çalışmadır.
+Alışveriş Danışmanım projesi, e-ticaret platformlarındaki karmaşık, manipüle edilmiş veya bilgi kirliliği içeren kullanıcı yorumlarını Doğal Dil İşleme ve Semantik Analiz yöntemleriyle filtreleyerek rasyonel bir satın alma kararı üretmeyi amaçlar. Bu sistem, özellikle tüketicilerin karar verme süreçlerinde yaşadığı aşırı bilgi yüklemesini azaltmayı ve çok kriterli karar analizi metodolojisiyle objektif bir özellik matrisi sunmayı hedefleyen bir çalışmadır.
 
 Proje Ekibi:
 -Hediye Ekinci
 -Ümmü Beyza Alıcı
 
 Projenin Amacı ve Temel Fonksiyonları:
--Sistem, geleneksel e-ticaret platformlarındaki yıldız puanlarının ve ham yorumların kronik ürün problemlerini gizleme eğilimini ortadan kaldırmak için belirli fonksiyonları yerine getirir.
+-Sistem, geleneksel e-ticaret platformlarındaki yıldız puanlarının ve ham yorumların kronik ürün problemlerini gizleme eğilimini ortadan kaldırmak için belirli fonksiyonları yerine getirir. Kullancı aradığı verilere ulaşmak için yorumlarda gezmesi yerine direk web sitemizden aradğı özelliği sorabilir ve sistem yorumlar arasından aranan bilgiyi cımbızlayıp kullanıcıya ulaştırır.
 -Semantik Duygu Madenciliği fonksiyonu ile reklam, kargo övgüsü veya anlamsız metinler ayıklanarak sadece gerçek kullanıcı deneyimlerine odaklanılır.
 -Dinamik Kategori Matrisi sayesinde incelenen ürünün tipine göre tamamen dinamik kıyaslama kriterleri belirlenir.
 -Çok Kriterli Karar Analizi tabanlı karar desteği ile iki alternatif, toplam fayda fonksiyonunu maksimize edecek şekilde analiz edilir ve nihai bir yönetici özeti raporu üretilir.
